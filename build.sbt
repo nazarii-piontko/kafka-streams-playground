@@ -11,4 +11,8 @@ libraryDependencies += "ch.qos.logback" % "logback-core" % logback
 libraryDependencies += "ch.qos.logback" % "logback-classic" % logback
 
 libraryDependencies += "org.apache.kafka" % "kafka-streams-test-utils" % "2.4.0" % "test"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % "test"
+
+libraryDependencies ++= Seq(
+  "org.scalactic" %% "scalactic" % "3.0.8",
+  "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+)
