@@ -2,59 +2,190 @@ version: "3.7"
 
 services:
 
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+    networks:
+      - kstreams
+
   kafka1:
     container_name: kafka1
-    image: wurstmeister/kafka
+    image: confluentinc/cp-enterprise-kafka
+    hostname: kafka1
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_NUM_PARTITIONS: "8"
+      KAFKA_NUM_PARTITIONS: 4
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: anonymous
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-    - 9092:9092
+      - 9092:9092
+    networks:
+      - kstreams
     depends_on:
       - zookeeper
 
   kafka2:
     container_name: kafka2
-    image: wurstmeister/kafka
+    image: confluentinc/cp-enterprise-kafka
+    hostname: kafka2
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9093,
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:9093
-      KAFKA_NUM_PARTITIONS: "8"
+      KAFKA_NUM_PARTITIONS: 4
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29093
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: anonymous
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-    - 9093:9093
+      - 9093:9093
+    networks:
+      - kstreams
     depends_on:
       - zookeeper
 
   kafka3:
     container_name: kafka3
-    image: wurstmeister/kafka
+    image: confluentinc/cp-enterprise-kafka
+    hostname: kafka3
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29094,PLAINTEXT_HOST://0.0.0.0:9094,
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,PLAINTEXT_HOST://localhost:9094
-      KAFKA_NUM_PARTITIONS: "8"
+      KAFKA_NUM_PARTITIONS: 4
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29094
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: anonymous
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9094:9094
+    networks:
+      - kstreams
     depends_on:
       - zookeeper
 
-  zookeeper:
-    container_name: zookeeper
-    image: wurstmeister/zookeeper
+  kafka-schema-registry:
+    container_name: kafka-schema-registry
+    image: confluentinc/cp-schema-registry
+    hostname: schema-registry
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper:2181
     ports:
-      - 2181:2181
+      - 8081:8081
+    networks:
+      - kstreams
+    depends_on:
+      - zookeeper
+      - kafka1
+      - kafka2
+      - kafka3
+
+  kafka-connect:
+    container_name: kafka-connect
+    image: confluentinc/cp-kafka-connect
+    hostname: kafka-connect
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29093,kafka3:29094
+      CONNECT_REST_PORT: 28083
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-config
+      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_LOG4J_ROOT_LOGLEVEL: DEBUG
+      # CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
+    ports:
+      - 28083:28083
+    networks:
+      - kstreams
+    depends_on:
+      - kafka-schema-registry
+      - kafka1
+      - kafka2
+      - kafka3
+
+  kafka-control-center:
+    container_name: kafka-control-center
+    image: confluentinc/cp-enterprise-control-center
+    hostname: kafka-control-center
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29093,kafka3:29094
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONTROL_CENTER_CONNECT_CLUSTER: http://kafka-connect:28083
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_REST_LISTENERS: http://0.0.0.0:9021,https://0.0.0.0:9022
+    ports:
+      - 9021:9021
+      - 9022:9022
+    networks:
+      - kstreams
+    depends_on:
+      - zookeeper
+      - kafka1
+      - kafka2
+      - kafka3
+      - kafka-connect
+      - kafka-schema-registry
+
+  pg:
+    container_name: pg
+    image: postgres
+    hostname: pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bars
+    volumes:
+      - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+    ports:
+      - 5432:5432
+    networks:
+      - kstreams
+
+networks:
+  kstreams:
