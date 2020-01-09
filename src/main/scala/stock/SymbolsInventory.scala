@@ -18,6 +18,7 @@ object SymbolsInventory {
       source =>
         source.mkString
           .asCsvReader[SymbolInfo](rfc.withHeader)
+          .filter(_.isRight)
           .map(_.right.get)
           .toVector
     }.get

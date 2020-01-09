@@ -60,7 +60,7 @@ object TopologyBuilder {
 
     barsMin1(1)
       .mapValues((_, v) => v.bar)
-      .to("bars_min_1_ongoing")
+      .to(Topics.barsMin1Ongoing)
 
     // Done, build & return topology
 

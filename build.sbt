@@ -15,8 +15,6 @@ libraryDependencies += "com.google.code.gson" % "gson" % "2.8.6"
 
 libraryDependencies += "io.razem" %% "scala-influxdb-client" % "0.6.2"
 
-lazy val skinnyMicroVersion = "2.0.+"
-
 libraryDependencies += "com.lihaoyi" %% "cask" % "0.5.2"
 libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.4.2"
 

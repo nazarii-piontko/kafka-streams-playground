@@ -16,7 +16,7 @@ class BarDeserializer extends JsonDeserializer[Bar]
 
 object InfluxDbWriterApp extends App {
   @volatile
-  private var stop = false
+  var stop = false
 
   sys.addShutdownHook {
     stop = true
@@ -29,7 +29,7 @@ object InfluxDbWriterApp extends App {
   props.put("key.deserializer", classOf[StringDeserializer])
   props.put("value.deserializer", classOf[BarDeserializer])
   props.put("enable.auto.commit", "false")
-  props.put("group.id", "stock-influxdb-writer")
+  props.put("group.id", "stock-bars-influxdb-writer")
 
   val consumer = new KafkaConsumer[String, Bar](props)
   try {
@@ -37,6 +37,7 @@ object InfluxDbWriterApp extends App {
 
     while (!stop) {
       val records = consumer.poll(Duration.ofSeconds(1))
+
       if (!records.isEmpty) {
         val points = records.asScala.map(r => {
           val bar = r.value()
@@ -48,7 +49,9 @@ object InfluxDbWriterApp extends App {
             .addField("close", bar.close)
             .addField("volume", bar.volume)
         }).toList
+
         db.bulkWrite(points, precision = Precision.MILLISECONDS)
+
         consumer.commitSync()
       }
     }

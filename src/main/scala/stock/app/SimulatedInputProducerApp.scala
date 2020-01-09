@@ -1,6 +1,6 @@
 package stock.app
 
-import java.time.{LocalDateTime, ZoneOffset}
+import java.time.{Clock, LocalDateTime, ZoneOffset}
 
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
@@ -12,15 +12,13 @@ import scala.util.Random
 
 object SimulatedInputProducerApp extends App {
   @volatile
-  private var stop = false
-
-  private val rnd = new Random(new java.util.Random())
+  var stop = false
 
   sys.addShutdownHook {
     stop = true
   }
 
-  val symbols = SymbolsInventory.symbols
+  val rnd = new Random(new java.util.Random())
 
   def genTrade(symbolInfo: SymbolInfo, dt: LocalDateTime): Trade = Trade(
     symbolInfo.symbol,
@@ -34,6 +32,8 @@ object SimulatedInputProducerApp extends App {
       0.01),
     rnd.between(10, 1000))
 
+  val symbols = SymbolsInventory.symbols
+
   val props = PropertiesFactory.createDefault()
   props.put("key.serializer", classOf[StringSerializer].getTypeName)
   props.put("value.serializer", classOf[JsonSerializer[Trade]].getTypeName)
@@ -43,7 +43,7 @@ object SimulatedInputProducerApp extends App {
   try {
     while (!stop) {
       for (symbolInfo <- symbols) {
-        val ts = LocalDateTime.now()
+        val ts = LocalDateTime.now(Clock.systemUTC())
         val trade = genTrade(symbolInfo, ts)
         val record = new ProducerRecord[String, Trade](Topics.trades,
           null,
