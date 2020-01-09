@@ -3,7 +3,7 @@ package stock
 import java.time.{LocalDateTime, ZoneOffset}
 
 import javafx.util.Duration
-import org.apache.kafka.streams.kstream.Transformer
+import org.apache.kafka.streams.kstream.{Materialized, Transformer}
 import org.apache.kafka.streams.processor.{ProcessorContext, To}
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.Serdes._
@@ -33,7 +33,7 @@ object TopologyBuilder {
 
     tradesStream
       .groupByKey
-      .reduce((_, v) => v)
+      .reduce((_, v) => v)(Materialized.as(stock.Stores.lastTrade))
 
     // 1 Min bars calculation
 
@@ -56,7 +56,7 @@ object TopologyBuilder {
 
     barsMin1(0)
       .mapValues((_, v) => v.bar)
-      .to("bars_min_1")
+      .to(Topics.barsMin1)
 
     barsMin1(1)
       .mapValues((_, v) => v.bar)

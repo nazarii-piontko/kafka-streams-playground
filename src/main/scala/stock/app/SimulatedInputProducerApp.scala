@@ -16,7 +16,7 @@ object SimulatedInputProducerApp extends App {
 
   private val rnd = new Random(new java.util.Random())
 
-  sys.ShutdownHookThread {
+  sys.addShutdownHook {
     stop = true
   }
 

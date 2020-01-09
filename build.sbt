@@ -1,4 +1,4 @@
-name := "KafkaStreamsPlayground"
+name := "kafka-streams-playground"
 
 version := "0.1"
 
@@ -12,6 +12,13 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % logback
 
 libraryDependencies += "com.nrinaudo" %% "kantan.csv" % "0.6.0"
 libraryDependencies += "com.google.code.gson" % "gson" % "2.8.6"
+
+libraryDependencies += "io.razem" %% "scala-influxdb-client" % "0.6.2"
+
+lazy val skinnyMicroVersion = "2.0.+"
+
+libraryDependencies += "com.lihaoyi" %% "cask" % "0.5.2"
+libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.4.2"
 
 libraryDependencies ++= Seq(
   "org.scalactic" %% "scalactic" % "3.0.8",

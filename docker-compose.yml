@@ -115,38 +115,38 @@ services:
       - kafka2
       - kafka3
 
-  kafka-connect:
-    container_name: kafka-connect
-    image: confluentinc/cp-kafka-connect
-    hostname: kafka-connect
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29093,kafka3:29094
-      CONNECT_REST_PORT: 28083
-      CONNECT_GROUP_ID: kafka-connect
-      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-config
-      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
-      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
-      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
-      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
-      CONNECT_LOG4J_ROOT_LOGLEVEL: DEBUG
-      # CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
-    ports:
-      - 28083:28083
-    networks:
-      - kstreams
-    depends_on:
-      - kafka-schema-registry
-      - kafka1
-      - kafka2
-      - kafka3
+#  kafka-connect:
+#    container_name: kafka-connect
+#    image: confluentinc/cp-kafka-connect
+#    hostname: kafka-connect
+#    environment:
+#      CONNECT_BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29093,kafka3:29094
+#      CONNECT_REST_PORT: 28083
+#      CONNECT_GROUP_ID: kafka-connect
+#      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-config
+#      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offsets
+#      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
+#      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+#      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+#      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+#      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+#      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+#      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
+#      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
+#      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+#      CONNECT_LOG4J_ROOT_LOGLEVEL: DEBUG
+#      CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
+#    ports:
+#      - 28083:28083
+#    networks:
+#      - kstreams
+#    depends_on:
+#      - kafka-schema-registry
+#      - kafka1
+#      - kafka2
+#      - kafka3
 
   kafka-control-center:
     container_name: kafka-control-center
@@ -169,23 +169,30 @@ services:
       - kafka1
       - kafka2
       - kafka3
-      - kafka-connect
+#      - kafka-connect
       - kafka-schema-registry
 
-  pg:
-    container_name: pg
-    image: postgres
-    hostname: pg
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bars
-    volumes:
-      - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+  influxdb:
+      container_name: influxdb
+      image: influxdb
+      hostname: influxdb
+      environment:
+        INFLUXDB_DB: bars
+      ports:
+        - 8086:8086
+      networks:
+        - kstreams
+
+  chronograf:
+    container_name: chronograf
+    image: chronograf
+    hostname: chronograf
     ports:
-      - 5432:5432
+      - 8888:8888
     networks:
       - kstreams
+    depends_on:
+      - influxdb
 
 networks:
   kstreams:
